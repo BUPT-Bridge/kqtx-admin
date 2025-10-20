@@ -5,8 +5,22 @@
 </template>
 
 <script>
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import request from '../../logic/register.js'
 import default_avatar from '../../assets/images/miao.png'
+
+// 修复 Leaflet 默认图标路径问题
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+})
 
 export default {
   name: 'BaiduMap',
@@ -16,11 +30,12 @@ export default {
       markers: [],
       timer: null,
       dataTimer: null,
-      leafletLoaded: false,
+      statsControl: null,
     }
   },
   mounted() {
-    this.loadLeaflet()
+    this.initMap()
+    this.startDataFetch()
   },
   beforeUnmount() {
     if (this.timer) clearInterval(this.timer)
@@ -32,47 +47,13 @@ export default {
     }
   },
   methods: {
-    // 动态加载 Leaflet CSS 和 JS
-    loadLeaflet() {
-      // 加载 CSS
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
-      link.crossOrigin = ''
-      document.head.appendChild(link)
-
-      // 加载 JS
-      const script = document.createElement('script')
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-      script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
-      script.crossOrigin = ''
-
-      script.onload = () => {
-        this.leafletLoaded = true
-        this.initMap()
-        this.startDataFetch()
-      }
-
-      script.onerror = () => {
-        console.error('Failed to load Leaflet')
-      }
-
-      document.head.appendChild(script)
-    },
-
     initMap() {
-      if (!this.leafletLoaded || typeof L === 'undefined') {
-        console.error('Leaflet is not loaded')
-        return
-      }
-
       // 创建地图实例，中心点设置为北京（天安门）
       this.map = L.map(this.$refs.map, {
         // 设置中文控件
         zoomControl: true,
         attributionControl: true,
-      }).setView([39.9467, 116.0942], 13)
+      }).setView([39.94675, 116.09419], 13)
 
       // 自定义缩放控件文本
       this.map.zoomControl.setPosition('topright')
@@ -127,7 +108,7 @@ export default {
 
     // 坐标转换：从百度坐标系(BD09)转换为WGS84坐标系
     bd09ToWgs84(lng, lat) {
-      const X_PI = (3.14159265358979324 * 3000.0) / 180.0
+      const X_PI = (3.141592653 * 3000.0) / 180.0
 
       let x = lng - 0.0065
       let y = lat - 0.006
@@ -210,12 +191,12 @@ export default {
         options: {
           position: 'topleft',
         },
-        onAdd: function (map) {
+        onAdd: function () {
           const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control stats-control')
           container.innerHTML = `
             <div style="background: rgba(44, 62, 80, 0.9); color: #ecf0f1; padding: 8px 12px;
                         border-radius: 4px; font-family: 'Microsoft YaHei', Arial, sans-serif; font-size: 12px;">
-              <strong>用户: ${userCount} 人</strong>
+              <strong>在线用户: ${userCount} 人</strong>
             </div>
           `
           return container
