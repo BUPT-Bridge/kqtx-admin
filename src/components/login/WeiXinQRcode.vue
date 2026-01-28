@@ -127,7 +127,6 @@ const startPolling = () => {
 
           return
         }
-        // 假设您使用 Pinia 存储 token
         stopPolling()
 
         authStore.clearToken()

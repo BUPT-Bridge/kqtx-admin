@@ -10,6 +10,10 @@ const router = createRouter({
       component: LoginView,
     },
     {
+      path: '/login',
+      redirect: '/',
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
@@ -46,6 +50,11 @@ const router = createRouter({
           component: () => import('../views/panel/HistoryPanel.vue'),
         },
       ],
+    },
+    // 404 捕获路由 - 必须放在最后
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
 })

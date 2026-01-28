@@ -35,6 +35,15 @@
     </el-menu-item-group>
 
     <el-menu-item-group index="4">
+      <el-menu-item index="/panel/table">
+        <el-icon>
+          <DataBoard />
+        </el-icon>
+        <span>表单处理</span>
+      </el-menu-item>
+    </el-menu-item-group>
+
+    <el-menu-item-group index="5">
       <el-menu-item index="/panel/report">
         <el-icon>
           <Setting />
@@ -57,7 +66,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { UserFilled, Picture, Setting, Document, Back } from '@element-plus/icons-vue'
+import { UserFilled, Picture, Setting, Document, Back, DataBoard } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 
 import { request } from '@/logic/register'
@@ -104,6 +113,7 @@ onUnmounted(() => {
   top: 0;
   z-index: 100;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-menu::before {
