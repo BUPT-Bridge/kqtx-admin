@@ -1,5 +1,6 @@
 <template>
   <div class="box">
+    <div class="tit">实时位置</div>
     <div class="boxnav map-container" ref="map"></div>
   </div>
 </template>
@@ -28,7 +29,7 @@ export default {
     return {
       map: null,
       markers: [],
-      timer: null,
+      markersMap: new Map(), // 使用 Map 优化标记查找
       dataTimer: null,
       statsControl: null,
     }
@@ -38,8 +39,16 @@ export default {
     this.startDataFetch()
   },
   beforeUnmount() {
-    if (this.timer) clearInterval(this.timer)
-    if (this.dataTimer) clearInterval(this.dataTimer)
+    if (this.dataTimer) {
+      clearInterval(this.dataTimer)
+      this.dataTimer = null
+    }
+    // 清理标记
+    this.markers.forEach((marker) => {
+      this.map.removeLayer(marker)
+    })
+    this.markers = []
+    this.markersMap.clear()
     // 清理地图实例
     if (this.map) {
       this.map.remove()
@@ -48,15 +57,22 @@ export default {
   },
   methods: {
     initMap() {
-      // 创建地图实例，中心点设置为北京（天安门）
+      // 创建地图实例，中心点设置为矿桥东街社区
       this.map = L.map(this.$refs.map, {
-        // 设置中文控件
-        zoomControl: true,
+        zoomControl: false,
         attributionControl: true,
+        // 完全锁定地图视图
+        minZoom: 13,
+        maxZoom: 13,
+        zoomSnap: 0,
+        zoomDelta: 0,
+        scrollWheelZoom: false, // 禁用滚轮缩放
+        doubleClickZoom: false, // 禁用双击缩放
+        touchZoom: false, // 禁用触摸缩放
+        boxZoom: false, // 禁用框选缩放
+        dragging: false, // 禁用拖拽，完全锁定
+        keyboard: false, // 禁用键盘控制
       }).setView([39.94675, 116.09419], 13)
-
-      // 自定义缩放控件文本
-      this.map.zoomControl.setPosition('topright')
 
       // 使用高德地图的中文瓦片服务（暗色主题）
       this.addChineseMapLayer()
@@ -78,26 +94,7 @@ export default {
         },
       )
 
-      // 备用方案：腾讯地图暗色主题
-      const tencentDark = L.tileLayer(
-        'https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&styleid=1000&scene=0&version=347',
-        {
-          attribution: '© 腾讯地图',
-          subdomains: '0123',
-          maxZoom: 18,
-          minZoom: 3,
-        },
-      )
-
-      // 优先使用高德地图，如果失败则使用腾讯地图
       amapDark.addTo(this.map)
-
-      // 监听瓦片加载错误，切换到备用地图
-      amapDark.on('tileerror', () => {
-        console.warn('高德地图加载失败，切换到腾讯地图')
-        this.map.removeLayer(amapDark)
-        tencentDark.addTo(this.map)
-      })
     },
 
     // 获取图片完整URL
@@ -120,63 +117,80 @@ export default {
       return [lat, lng]
     },
 
-    // 更新标记点
+    // 更新标记点（优化版本，避免不必要的重绘）
     updateMarkers(data) {
-      // 清除旧的标记点
-      this.markers.forEach((marker) => {
-        this.map.removeLayer(marker)
-      })
-      this.markers = []
+      const newMarkersMap = new Map()
 
-      // 添加新的标记点
+      // 处理新数据
       data.forEach((item) => {
-        if (!item.Latitude_Longitude) return // 跳过没有经纬度的项
+        if (!item.Latitude_Longitude) return
 
+        const userId = item.serial_number || item.username
         const [lat, lng] = item.Latitude_Longitude.split(',').map(Number)
 
-        // 如果坐标看起来像是百度坐标系，进行转换
+        // 坐标转换
         let finalCoords = [lat, lng]
         if (lng > 73 && lng < 136 && lat > 3 && lat < 54) {
-          // 这个范围大致是中国的经纬度范围，可能是百度坐标系
           finalCoords = this.bd09ToWgs84(lng, lat)
         }
 
-        // 创建自定义图标
-        const customIcon = L.icon({
-          iconUrl: this.getImageUrl(item.avatar),
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-          popupAnchor: [0, -16],
-          className: 'custom-marker-icon',
-        })
-
-        const marker = L.marker(finalCoords, { icon: customIcon })
-        marker.addTo(this.map)
-        this.markers.push(marker)
-
-        // 添加中文弹窗信息
-        if (item.name || item.username) {
-          const popupContent = `
-            <div style="text-align: center; font-family: 'Microsoft YaHei', Arial, sans-serif;">
-              <img src="${this.getImageUrl(item.avatar)}"
-                   style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 8px; border: 2px solid #fff;" />
-              <br />
-              <strong style="color: #333; font-size: 14px;">${item.name || item.username || '用户'}</strong>
-              ${item.last_seen ? `<br /><span style="color: #666; font-size: 12px;">最后在线: ${item.last_seen}</span>` : ''}
-              ${item.location_name ? `<br /><span style="color: #666; font-size: 12px;">位置: ${item.location_name}</span>` : ''}
-            </div>
-          `
-          marker.bindPopup(popupContent, {
-            maxWidth: 200,
-            className: 'chinese-popup',
+        // 检查是否已存在该标记
+        if (this.markersMap.has(userId)) {
+          const existingMarker = this.markersMap.get(userId)
+          // 更新位置（如果位置改变）
+          const currentLatLng = existingMarker.getLatLng()
+          if (currentLatLng.lat !== finalCoords[0] || currentLatLng.lng !== finalCoords[1]) {
+            existingMarker.setLatLng(finalCoords)
+          }
+          newMarkersMap.set(userId, existingMarker)
+        } else {
+          // 创建新标记
+          const customIcon = L.icon({
+            iconUrl: this.getImageUrl(item.avatar),
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16],
+            className: 'custom-marker-icon',
           })
+
+          const marker = L.marker(finalCoords, { icon: customIcon })
+          marker.addTo(this.map)
+
+          // 添加弹窗
+          if (item.name || item.username) {
+            const popupContent = `
+              <div style="text-align: center; font-family: 'Microsoft YaHei', Arial, sans-serif;">
+                <img src="${this.getImageUrl(item.avatar)}"
+                     style="width: 40px; height: 40px; border-radius: 50%; margin-bottom: 8px; border: 2px solid #fff;" />
+                <br />
+                <strong style="color: #333; font-size: 14px;">${item.name || item.username || '用户'}</strong>
+                ${item.last_seen ? `<br /><span style="color: #666; font-size: 12px;">最后在线: ${item.last_seen}</span>` : ''}
+                ${item.location_name ? `<br /><span style="color: #666; font-size: 12px;">位置: ${item.location_name}</span>` : ''}
+              </div>
+            `
+            marker.bindPopup(popupContent, {
+              maxWidth: 200,
+              className: 'chinese-popup',
+            })
+          }
+
+          newMarkersMap.set(userId, marker)
         }
       })
 
-      // 如果有数据，显示统计信息
-      if (data.length > 0) {
-        this.showStatsControl(data.length)
-      }
+      // 移除不再存在的标记
+      this.markersMap.forEach((marker, userId) => {
+        if (!newMarkersMap.has(userId)) {
+          this.map.removeLayer(marker)
+        }
+      })
+
+      // 更新标记映射
+      this.markersMap = newMarkersMap
+      this.markers = Array.from(newMarkersMap.values())
+
+      // 更新统计信息
+      this.showStatsControl(data.length)
     },
 
     // 显示统计信息控件
@@ -229,6 +243,39 @@ export default {
 </script>
 
 <style scoped>
+.box {
+  height: 100%;
+  background: rgba(0, 24, 106, 0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+.tit {
+  color: #fff;
+  font-size: 18px;
+  padding: 10px 15px 10px 30px;
+  letter-spacing: normal;
+  position: relative;
+}
+
+.tit:before {
+  position: absolute;
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: rgba(22, 214, 255, 0.9);
+  box-shadow: 0 0 5px rgba(22, 214, 255, 0.9);
+  border-radius: 10px;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.boxnav {
+  flex: 1;
+  padding: 0 15px 15px;
+}
+
 .anchorBL {
   display: none;
 }
@@ -263,17 +310,7 @@ export default {
   background: #fff;
 }
 
-/* Leaflet 控件样式调整以适应暗色主题 */
-:deep(.leaflet-control-zoom a) {
-  background-color: #2c3e50 !important;
-  color: #ecf0f1 !important;
-  border-color: #34495e !important;
-  font-weight: bold;
-}
-
-:deep(.leaflet-control-zoom a:hover) {
-  background-color: #34495e !important;
-}
+/* Leaflet 控件样式调整以适应暗色主题（缩放已锁定，无需显示） */
 
 :deep(.leaflet-control-attribution) {
   background-color: rgba(44, 62, 80, 0.9) !important;

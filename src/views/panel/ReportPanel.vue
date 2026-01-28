@@ -27,24 +27,11 @@ import { Setting } from '@element-plus/icons-vue'
   justify-content: center;
   align-items: center;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .report-panel:hover {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-}
-
-.report-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  pointer-events: none;
-  border-radius: 8px;
 }
 
 /* Empty 组件样式 */
@@ -58,7 +45,6 @@ import { Setting } from '@element-plus/icons-vue'
 :deep(.empty-icon) {
   font-size: 80px;
   color: #909399;
-  animation: rotate 10s linear infinite;
 }
 
 :deep(.el-empty__description) {
@@ -87,16 +73,6 @@ import { Setting } from '@element-plus/icons-vue'
 
   100% {
     transform: scale(1);
-  }
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
   }
 }
 </style>

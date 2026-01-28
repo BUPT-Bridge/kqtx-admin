@@ -1,16 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>矿桥东街社区管理系统</title>
+    <style>
+      #screen-size-warning {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #1a2233 0%, #0d1117 100%);
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: #fff;
+        font-family: 'Microsoft YaHei', Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="/favicon.ico">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>矿桥东街社区管理系统</title>
-</head>
+      #screen-size-warning .icon {
+        font-size: 80px;
+        margin-bottom: 30px;
+        animation: pulse 2s infinite;
+      }
 
-<body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.js"></script>
-</body>
+      #screen-size-warning h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #409eff;
+      }
 
+      #screen-size-warning p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 400px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+
+      @media (max-width: 1024px) {
+        #screen-size-warning {
+          display: flex !important;
+        }
+        #app {
+          display: none !important;
+        }
+      }
+
+      @media (max-height: 768px) {
+        #screen-size-warning {
+          display: flex !important;
+        }
+        #app {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="screen-size-warning">
+      <div class="icon">🖥️</div>
+      <h1>屏幕尺寸过小</h1>
+      <p>
+        矿桥东街社区管理系统需要较大的屏幕空间以获得最佳体验。<br />
+        请使用电脑或更大尺寸的设备访问。<br /><br />
+        <strong>最低要求：1024x768</strong>
+      </p>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

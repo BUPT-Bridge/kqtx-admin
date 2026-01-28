@@ -124,15 +124,29 @@ export default {
 }
 
 .tit {
-  /* padding: 10px 15px; */
   color: #fff;
   font-size: 18px;
+  padding: 10px 15px 10px 30px;
   letter-spacing: normal;
+  position: relative;
+}
+
+.tit:before {
+  position: absolute;
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: rgba(22, 214, 255, 0.9);
+  box-shadow: 0 0 5px rgba(22, 214, 255, 0.9);
+  border-radius: 10px;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .boxnav {
   flex: 1;
   height: 100%;
-  padding: 5px 15px 15px;
+  padding: 0 15px 15px;
 }
 </style>

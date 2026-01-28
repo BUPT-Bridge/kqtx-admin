@@ -1,19 +1,17 @@
 <template>
   <div class="box">
     <div class="tit">AI推荐</div>
-    <div class="boxnav" id="ai_recommend">
-      <div class="ai-recommend-container">
-        <div class="ai-recommend-list" :style="{ transform: `translateY(${scrollTop}px)` }">
-          <!-- 原始列表 -->
-          <div v-for="item in recommendations" :key="item.category" class="ai-item">
-            <div class="ai-item-category">{{ item.category }}</div>
-            <div class="ai-item-solution">{{ item.solution_summary }}</div>
-          </div>
-          <!-- 克隆列表用于无缝滚动 -->
-          <div v-for="item in recommendations" :key="item.category + '_clone'" class="ai-item">
-            <div class="ai-item-category">{{ item.category }}</div>
-            <div class="ai-item-solution">{{ item.solution_summary }}</div>
-          </div>
+    <div class="boxnav">
+      <div class="ai-recommend-list" :style="{ transform: `translateY(${scrollTop}px)` }">
+        <!-- 原始列表 -->
+        <div v-for="item in recommendations" :key="item.category" class="ai-item">
+          <div class="ai-item-category">{{ item.category }}</div>
+          <div class="ai-item-solution">{{ item.solution_summary }}</div>
+        </div>
+        <!-- 克隆列表用于无缝滚动 -->
+        <div v-for="item in recommendations" :key="item.category + '_clone'" class="ai-item">
+          <div class="ai-item-category">{{ item.category }}</div>
+          <div class="ai-item-solution">{{ item.solution_summary }}</div>
         </div>
       </div>
     </div>
@@ -29,30 +27,43 @@ export default {
   setup() {
     const scrollTop = ref(0)
     const scrollHeight = ref(0)
-    let timer = null
+    let animationFrame = null
     let dataTimer = null
     const recommendations = ref([])
+    let lastTime = 0
 
     const calculateHeight = () => {
       const listElement = document.querySelector('.ai-recommend-list')
       if (listElement && recommendations.value.length > 0) {
         const items = listElement.querySelectorAll('.ai-item')
+        // 只计算原始列表的高度（不包括克隆的）
         scrollHeight.value = Array.from(items)
           .slice(0, recommendations.value.length)
-          .reduce((acc, item) => acc + item.offsetHeight + 15, 0)
+          .reduce((acc, item) => acc + item.offsetHeight + 10, 0) // 加上margin-bottom
       }
     }
 
-    const startScroll = () => {
-      if (timer) clearInterval(timer)
-      const speed = 0.5
-      timer = setInterval(() => {
-        scrollTop.value -= speed
-        // 当滚动到底部时重置位置
+    const scroll = (currentTime) => {
+      if (!lastTime) lastTime = currentTime
+      const deltaTime = currentTime - lastTime
+
+      // 每16.67ms(60fps)滚动约0.83px，相当于每秒50px
+      if (deltaTime >= 16.67) {
+        scrollTop.value -= 0.83
+        // 当滚动到原始列表的末尾时，重置到起点实现无缝循环
         if (Math.abs(scrollTop.value) >= scrollHeight.value) {
           scrollTop.value = 0
         }
-      }, 30)
+        lastTime = currentTime
+      }
+
+      animationFrame = requestAnimationFrame(scroll)
+    }
+
+    const startScroll = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame)
+      lastTime = 0
+      animationFrame = requestAnimationFrame(scroll)
     }
 
     const fetchData = async () => {
@@ -60,7 +71,6 @@ export default {
         const response = await request.get('/analysis/event')
         if (response.data && response.data.length > 0) {
           recommendations.value = response.data
-          // 数据更新后重新计算高度
           setTimeout(calculateHeight, 100)
         }
       } catch (error) {
@@ -68,12 +78,11 @@ export default {
       }
     }
 
-    // 监听数据变化
     watch(
       recommendations,
       () => {
         calculateHeight()
-        if (!timer) startScroll()
+        if (!animationFrame && recommendations.value.length > 0) startScroll()
       },
       { deep: true },
     )
@@ -84,7 +93,7 @@ export default {
     })
 
     onUnmounted(() => {
-      if (timer) clearInterval(timer)
+      if (animationFrame) cancelAnimationFrame(animationFrame)
       if (dataTimer) clearInterval(dataTimer)
     })
 
@@ -100,49 +109,49 @@ export default {
 .box {
   height: 100%;
   background: rgba(0, 24, 106, 0.6);
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
 }
 
 .tit {
-  /* padding: 10px 15px; */
   color: #fff;
   font-size: 18px;
+  padding: 10px 15px 10px 30px;
   letter-spacing: normal;
+  position: relative;
+}
+
+.tit:before {
+  position: absolute;
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: rgba(22, 214, 255, 0.9);
+  box-shadow: 0 0 5px rgba(22, 214, 255, 0.9);
+  border-radius: 10px;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .boxnav {
-  padding: 15px;
-  height: calc(100% - 50px);
+  flex: 1;
+  padding: 0 15px;
   overflow: hidden;
-}
-
-.ai-recommend-container {
-  height: 100%;
+  position: relative;
 }
 
 .ai-recommend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-}
-
-.ai-recommend-container {
-  height: 100%;
-}
-
-.ai-recommend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  transition: transform 0.3s linear; /* 添加平滑过渡效果 */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .ai-item {
   background: rgba(255, 255, 255, 0.1);
   padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 5px;
+  border-radius: 6px;
+  margin-bottom: 10px;
   flex-shrink: 0;
 }
 
@@ -159,7 +168,7 @@ export default {
   opacity: 0.8;
 }
 
-.ai-recommend-container:hover .ai-recommend-list {
+.boxnav:hover .ai-recommend-list {
   animation-play-state: paused;
 }
 </style>

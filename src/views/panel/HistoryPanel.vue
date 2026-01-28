@@ -334,6 +334,10 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
+.history-panel:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
 .download-section {
   margin-bottom: 20px;
   display: flex;
