@@ -23,7 +23,6 @@ import CommunityShow from '@/components/adminpanel/CommunityShow.vue'
 
 .show-panel:hover {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
 }
 
 .show-panel::before {

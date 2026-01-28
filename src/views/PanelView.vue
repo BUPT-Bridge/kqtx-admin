@@ -37,6 +37,7 @@ watch(
   background: linear-gradient(135deg, #1a2233 0%, #0d1117 100%);
   position: relative;
   overflow: hidden;
+  padding-left: 200px;
 }
 
 .panel::before {
@@ -54,6 +55,7 @@ watch(
   flex: 1;
   display: flex;
   margin: 20px;
+  margin-left: 0;
   position: relative;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);

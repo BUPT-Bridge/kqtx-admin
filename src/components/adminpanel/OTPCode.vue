@@ -1,24 +1,80 @@
 <template>
-  <div class="otp-code">
-    <div class="code-container">
-      <h3>动态验证码</h3>
-      <div class="code-display">
-        <span class="code">{{ otpCode || '获取中...' }}</span>
-        <el-button v-if="otpCode" type="text" class="copy-button" @click="copyCode">
-          <el-icon><Document /></el-icon>
-          复制
-        </el-button>
-      </div>
+  <div class="otp-wrapper">
+    <!-- 管理员验证码 -->
+    <div class="otp-code">
+      <div class="code-container">
+        <h3>管理员验证码</h3>
+        <div class="code-display">
+          <span class="code">{{ adminOtpCode || '获取中...' }}</span>
+          <el-button
+            v-if="adminOtpCode"
+            type="text"
+            class="copy-button"
+            @click="copyCode(adminOtpCode)"
+          >
+            <el-icon><Document /></el-icon>
+            复制
+          </el-button>
+        </div>
 
-      <div class="timer-container">
-        <div class="timer-text">有效期: {{ formattedTime }}</div>
-        <el-progress :percentage="timePercentage" :color="progressColor" :stroke-width="8" />
-      </div>
+        <div class="timer-container">
+          <div class="timer-text">有效期: {{ adminFormattedTime }}</div>
+          <el-progress
+            :percentage="adminTimePercentage"
+            :color="adminProgressColor"
+            :stroke-width="8"
+          />
+        </div>
 
-      <div class="button-group">
-        <el-button type="primary" @click="getOTPCode" :loading="loading" :disabled="isCountingDown">
-          {{ isCountingDown ? '刷新倒计时中' : '刷新验证码' }}
-        </el-button>
+        <div class="button-group">
+          <el-button
+            type="primary"
+            @click="getAdminOTPCode"
+            :loading="adminLoading"
+            :disabled="adminIsCountingDown"
+          >
+            {{ adminIsCountingDown ? '刷新倒计时中' : '刷新验证码' }}
+          </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 网格员验证码 -->
+    <div class="otp-code">
+      <div class="code-container">
+        <h3>网格员验证码</h3>
+        <div class="code-display">
+          <span class="code">{{ gridOtpCode || '获取中...' }}</span>
+          <el-button
+            v-if="gridOtpCode"
+            type="text"
+            class="copy-button"
+            @click="copyCode(gridOtpCode)"
+          >
+            <el-icon><Document /></el-icon>
+            复制
+          </el-button>
+        </div>
+
+        <div class="timer-container">
+          <div class="timer-text">有效期: {{ gridFormattedTime }}</div>
+          <el-progress
+            :percentage="gridTimePercentage"
+            :color="gridProgressColor"
+            :stroke-width="8"
+          />
+        </div>
+
+        <div class="button-group">
+          <el-button
+            type="primary"
+            @click="getGridOTPCode"
+            :loading="gridLoading"
+            :disabled="gridIsCountingDown"
+          >
+            {{ gridIsCountingDown ? '刷新倒计时中' : '刷新验证码' }}
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -30,65 +86,115 @@ import { ElMessage } from 'element-plus'
 import { Document } from '@element-plus/icons-vue'
 import { request } from '../../logic/register.js'
 
-const otpCode = ref('')
-const loading = ref(false)
-const remainingTime = ref(0)
-const totalTime = 240 // 4分钟 = 240秒
-let countdownTimer = null
+const totalTime = 30 // 单位s
 
-// 格式化剩余时间
-const formattedTime = computed(() => {
-  const minutes = Math.floor(remainingTime.value / 60)
-  const seconds = remainingTime.value % 60
+// 管理员状态
+const adminOtpCode = ref('')
+const adminLoading = ref(false)
+const adminRemainingTime = ref(0)
+let adminCountdownTimer = null
+
+// 网格员状态
+const gridOtpCode = ref('')
+const gridLoading = ref(false)
+const gridRemainingTime = ref(0)
+let gridCountdownTimer = null
+
+// 管理员计算属性
+const adminFormattedTime = computed(() => {
+  const minutes = Math.floor(adminRemainingTime.value / 60)
+  const seconds = adminRemainingTime.value % 60
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 })
 
-// 计算倒计时百分比
-const timePercentage = computed(() => {
-  return ((remainingTime.value / totalTime) * 100).toFixed(2)
+const adminTimePercentage = computed(() => {
+  return ((adminRemainingTime.value / totalTime) * 100).toFixed(2)
 })
 
-// 根据剩余时间计算进度条颜色
-const progressColor = computed(() => {
-  if (timePercentage.value > 50) {
+const adminProgressColor = computed(() => {
+  if (adminTimePercentage.value > 50) {
     return '#67C23A' // 绿色
-  } else if (timePercentage.value > 20) {
+  } else if (adminTimePercentage.value > 20) {
     return '#E6A23C' // 黄色
   } else {
     return '#F56C6C' // 红色
   }
 })
 
-// 是否在倒计时中
-const isCountingDown = computed(() => {
-  return remainingTime.value > 0
+const adminIsCountingDown = computed(() => {
+  return adminRemainingTime.value > 0
 })
 
-// 获取OTP验证码
-const getOTPCode = async () => {
+// 网格员计算属性
+const gridFormattedTime = computed(() => {
+  const minutes = Math.floor(gridRemainingTime.value / 60)
+  const seconds = gridRemainingTime.value % 60
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+})
+
+const gridTimePercentage = computed(() => {
+  return ((gridRemainingTime.value / totalTime) * 100).toFixed(2)
+})
+
+const gridProgressColor = computed(() => {
+  if (gridTimePercentage.value > 50) {
+    return '#67C23A' // 绿色
+  } else if (gridTimePercentage.value > 20) {
+    return '#E6A23C' // 黄色
+  } else {
+    return '#F56C6C' // 红色
+  }
+})
+
+const gridIsCountingDown = computed(() => {
+  return gridRemainingTime.value > 0
+})
+
+// 获取管理员OTP验证码
+const getAdminOTPCode = async () => {
   try {
-    loading.value = true
+    adminLoading.value = true
     const response = await request.get('/user/Changepermission')
     if (response.code === 200 && response.data) {
-      otpCode.value = response.data.code || response.data
-      startCountdown()
+      adminOtpCode.value = response.data.code || response.data
+      startAdminCountdown()
     } else {
       throw new Error('获取验证码失败')
     }
   } catch (error) {
-    ElMessage.error('获取验证码失败')
-    console.error('获取验证码失败:', error)
+    ElMessage.error('获取管理员验证码失败')
+    console.error('获取管理员验证码失败:', error)
   } finally {
-    loading.value = false
+    adminLoading.value = false
+  }
+}
+
+// 获取网格员OTP验证码（假设使用不同的API端点，如果相同请修改）
+const getGridOTPCode = async () => {
+  try {
+    gridLoading.value = true
+    // TODO: 修改为网格员的实际API端点
+    const response = await request.get('/user/GridChangepermission')
+    if (response.code === 200 && response.data) {
+      gridOtpCode.value = response.data.code || response.data
+      startGridCountdown()
+    } else {
+      throw new Error('获取验证码失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取网格员验证码失败')
+    console.error('获取网格员验证码失败:', error)
+  } finally {
+    gridLoading.value = false
   }
 }
 
 // 复制验证码到剪贴板
-const copyCode = () => {
-  if (!otpCode.value) return
+const copyCode = (code) => {
+  if (!code) return
 
   navigator.clipboard
-    .writeText(otpCode.value)
+    .writeText(code)
     .then(() => {
       ElMessage.success('验证码已复制到剪贴板')
     })
@@ -98,44 +204,70 @@ const copyCode = () => {
     })
 }
 
-// 开始倒计时
-const startCountdown = () => {
-  // 清除现有计时器
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
+// 开始管理员倒计时
+const startAdminCountdown = () => {
+  if (adminCountdownTimer) {
+    clearInterval(adminCountdownTimer)
   }
 
-  // 设置初始时间
-  remainingTime.value = totalTime
+  adminRemainingTime.value = totalTime
 
-  // 设置计时器
-  countdownTimer = setInterval(() => {
-    if (remainingTime.value > 0) {
-      remainingTime.value--
+  adminCountdownTimer = setInterval(() => {
+    if (adminRemainingTime.value > 0) {
+      adminRemainingTime.value--
     } else {
-      // 时间到，清除验证码
-      otpCode.value = '已过期'
-      clearInterval(countdownTimer)
+      adminOtpCode.value = '已过期'
+      clearInterval(adminCountdownTimer)
+    }
+  }, 1000)
+}
+
+// 开始网格员倒计时
+const startGridCountdown = () => {
+  if (gridCountdownTimer) {
+    clearInterval(gridCountdownTimer)
+  }
+
+  gridRemainingTime.value = totalTime
+
+  gridCountdownTimer = setInterval(() => {
+    if (gridRemainingTime.value > 0) {
+      gridRemainingTime.value--
+    } else {
+      gridOtpCode.value = '已过期'
+      clearInterval(gridCountdownTimer)
     }
   }, 1000)
 }
 
 // 组件加载时获取验证码
 onMounted(() => {
-  getOTPCode()
+  getAdminOTPCode()
+  getGridOTPCode()
 })
 
 // 组件卸载时清除计时器
 onUnmounted(() => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
+  if (adminCountdownTimer) {
+    clearInterval(adminCountdownTimer)
+  }
+  if (gridCountdownTimer) {
+    clearInterval(gridCountdownTimer)
   }
 })
 </script>
 
 <style scoped>
+.otp-wrapper {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
 .otp-code {
   padding: 25px;
+  flex: 1;
+  min-width: 400px;
   max-width: 500px;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
@@ -257,5 +389,15 @@ h3 {
 
 .otp-code {
   animation: fadeIn 0.5s ease-out;
+}
+
+@media (max-width: 900px) {
+  .otp-wrapper {
+    flex-direction: column;
+  }
+
+  .otp-code {
+    max-width: 100%;
+  }
 }
 </style>

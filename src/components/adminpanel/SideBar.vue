@@ -99,8 +99,11 @@ onUnmounted(() => {
   backdrop-filter: blur(10px);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  overflow-y: auto;
 }
 
 .sidebar-menu::before {
@@ -156,26 +159,44 @@ onUnmounted(() => {
 .back-button-container {
   position: absolute;
   bottom: 20px;
-  width: 100%;
+  left: 0;
+  right: 0;
+  width: calc(100% - 20px);
+  margin: 0 10px;
 }
 
 .back-button-container .el-menu-item {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 12px;
-  margin-top: 10px;
+  padding: 12px 0 !important;
+  margin: 10px 0 0 0 !important;
   background-color: rgba(0, 0, 0, 0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
   text-align: center;
+  height: auto !important;
+  line-height: normal !important;
 }
 
 .back-button-container .el-menu-item:hover {
   background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateX(0) !important;
 }
 
 .back-button-container .el-icon {
   color: #f56c6c;
   margin-right: 8px;
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.back-button-container .el-menu-item span {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0;
 }
 </style>

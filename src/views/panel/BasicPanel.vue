@@ -45,7 +45,6 @@ import OTPCode from '@/components/adminpanel/OTPCode.vue'
 
 .basic-panel:hover {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
 }
 
 :deep(.custom-tabs) {
