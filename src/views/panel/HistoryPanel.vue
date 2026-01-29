@@ -85,9 +85,9 @@
           </el-descriptions-item>
         </el-descriptions>
 
-        <!-- 投诉人信息 -->
+        <!-- 投诉人/建议人信息 -->
         <el-descriptions class="mt-20" :column="2" border>
-          <el-descriptions-item label="投诉人">
+          <el-descriptions-item :label="currentForm.type === 'complaint' ? '投诉人' : '建议人'">
             {{ currentForm.name }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
@@ -96,7 +96,10 @@
           <el-descriptions-item label="地点" :span="2">
             {{ currentForm.address }}
           </el-descriptions-item>
-          <el-descriptions-item label="投诉内容" :span="2">
+          <el-descriptions-item
+            :label="currentForm.type === 'complaint' ? '投诉内容' : '建议内容'"
+            :span="2"
+          >
             {{ currentForm.content }}
           </el-descriptions-item>
         </el-descriptions>
@@ -109,8 +112,11 @@
               v-for="(img, index) in currentForm.images"
               :key="index"
               :src="imageBaseUrl + img.image"
+              :preview-src-list="currentForm.images.map((i) => imageBaseUrl + i.image)"
+              :initial-index="index"
               fit="contain"
               class="detail-image"
+              preview-teleported
             />
           </div>
         </div>
@@ -121,8 +127,11 @@
               v-for="(img, index) in currentForm.handle_images"
               :key="index"
               :src="imageBaseUrl + img.image"
+              :preview-src-list="currentForm.handle_images.map((i) => imageBaseUrl + i.image)"
+              :initial-index="index"
               fit="contain"
               class="detail-image"
+              preview-teleported
             />
           </div>
         </div>
