@@ -133,11 +133,11 @@
         <div class="status-info mt-20">
           <el-tag
             :type="
-              currentForm.handle === 0 ? 'info' : currentForm.handle === 1 ? 'success' : 'warning'
+              currentForm.handle === 0 ? 'info' : currentForm.handle === 1 ? 'warning' : 'success'
             "
           >
             {{
-              currentForm.handle === 0 ? '未处理' : currentForm.handle === 1 ? '已处理' : '处理中'
+              currentForm.handle === 0 ? '未处理' : currentForm.handle === 1 ? '处理中' : '已处理'
             }}
           </el-tag>
           <el-tag v-if="currentForm.feedback_need" type="warning" class="ml-10"> 需要回访 </el-tag>
