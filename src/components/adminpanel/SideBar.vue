@@ -65,12 +65,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
 import { UserFilled, Picture, Setting, Document, Back, DataBoard } from '@element-plus/icons-vue'
+
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-
 import { request } from '@/logic/register'
-
 const router = useRouter()
 const activeIndex = ref('/panel/basic')
 let authCheckInterval = null
@@ -89,7 +88,7 @@ const checkAuth = async () => {
 
 onMounted(() => {
   checkAuth() // 初始检查
-  authCheckInterval = setInterval(checkAuth, 5000) // 每5秒检查一次
+  // authCheckInterval = setInterval(checkAuth, 5000) // 每5秒检查一次
 })
 
 // 组件卸载时清除定时器

@@ -1,6 +1,11 @@
 <template>
   <div class="basic-panel">
     <el-tabs class="custom-tabs">
+      <el-tab-pane label="个人信息">
+        <transition name="fade-slide">
+          <UserProfile />
+        </transition>
+      </el-tab-pane>
       <el-tab-pane label="电话管理">
         <transition name="fade-slide">
           <CommunityPhone />
@@ -26,6 +31,7 @@
 </template>
 
 <script setup>
+import UserProfile from '@/components/adminpanel/UserProfile.vue'
 import CommunityPhone from '@/components/adminpanel/CommunityPhone.vue'
 import SwitchBanner from '@/components/adminpanel/SwitchBanner.vue'
 import WarmNotice from '@/components/adminpanel/WarmNotice.vue'

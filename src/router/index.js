@@ -45,6 +45,11 @@ const router = createRouter({
           component: () => import('../views/panel/ReportPanel.vue'),
         },
         {
+          path: 'table',
+          name: 'panel-table',
+          component: () => import('../views/panel/TablePanel.vue'),
+        },
+        {
           path: 'history',
           name: 'panel-history',
           component: () => import('../views/panel/HistoryPanel.vue'),
