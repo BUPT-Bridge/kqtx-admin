@@ -119,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Plus } from '@element-plus/icons-vue'
 import UserProfile from '@/components/adminpanel/UserProfile.vue'
